@@ -14,7 +14,14 @@ export async function sendChatMessage(message, history = []) {
   /** Send a chat message to the backend /chat endpoint with optional history. */
   const payload = { message, history };
   const { data } = await api.post('/chat', payload);
-  return data;
+  return data; // expects shape: { reply: string }
+}
+
+// PUBLIC_INTERFACE
+export async function sendChatAndGetReply(message, history = []) {
+  /** Convenience helper to return only the reply string from the backend response. */
+  const data = await sendChatMessage(message, history);
+  return data?.reply ?? '';
 }
 
 export default api;
