@@ -29,13 +29,38 @@ const api = axios.create({
   timeout: 20000,
 });
 
-// Normalize errors to improve user-facing messages
+// Log effective baseURL and environment once
+try {
+  // eslint-disable-next-line no-console
+  console.info('[ai-copilot] Axios baseURL:', baseURL);
+} catch (e) {
+  /* ignore */
+}
+
+// Normalize errors to improve user-facing messages and log diagnostics
 api.interceptors.response.use(
   (res) => res,
   (error) => {
+    try {
+      const cfg = error?.config || {};
+      const info = {
+        method: (cfg.method || 'get').toUpperCase(),
+        url: (cfg.baseURL || '') + (cfg.url || ''),
+        code: error?.code,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        responseData: error?.response?.data,
+        message: error?.message,
+      };
+      // eslint-disable-next-line no-console
+      console.error('[ai-copilot] Axios error:', info);
+    } catch {
+      /* ignore logging failure */
+    }
+
     if (error?.code === 'ECONNABORTED') {
       error.message = 'Request timed out while contacting the backend.';
-    } else if (error?.message === 'Network Error' && !error.response) {
+    } else if ((error?.message === 'Network Error' || !error?.response) && !error?.response) {
       error.message =
         'Network Error: Could not reach the backend. Verify API base URL and that the backend is running.';
     }
